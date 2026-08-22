@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <!-- Plumber embossed into the sewer wall: dark base, faint light edge, dark shadow -->
+  <defs>
+    <g id="p">
+      <path d="M9 12h5v1h-5zM7 13h9v1h-9zM6 14h12v2h-12zM6 16h9v1h-9zM6 17h2v1h-2zM8 18h7v2h-7zM8 20h3v1h-3zM12 20h3v1h-3zM8 21h2v1h-2zM12 21h2v1h-2z M8 22h2v1h-2zM12 22h2v1h-2zM8 23h3v1h-3zM12 23h3v1h-3z M10 6h1v1h-1zM9 7h1v4h-1zM10 11h1v1h-1z M10 7h3v1h-3zM11 8h2v1h-2zM10 10h3v1h-3zM11 11h1v1h-1zM18 14h1v2h-1zM6 18h2v1h-2z M12 6h1v1h-1zM13 7h1v1h-1zM13 10h1v1h-1zM12 11h1v1h-1z M10 9h4v1h-4z M8 17h7v1h-7z M10 8h1v1h-1z M18 11h1v3h-1zM18 16h1v4h-1z M16 8h5v1h-5zM17 9h3v1h-3zM18 10h1v1h-1z"/>
+    </g>
+  </defs>
+  <use href="#p" transform="translate(8.55 8.55)" fill="#000000" opacity="0.5"/>
+  <use href="#p" transform="translate(7.5 7.5)" fill="#ffffff" opacity="0.12"/>
+  <use href="#p" transform="translate(8 8)" fill="#101a15"/>
+</svg>

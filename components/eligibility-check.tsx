@@ -32,7 +32,7 @@ export function EligibilityCheck() {
 
   if (isLoading) {
     return (
-      <p className="animate-pulse text-sm text-black/60 dark:text-white/60">
+      <p className="animate-pulse text-sm text-white/70">
         Checking eligibility…
       </p>
     );
@@ -40,8 +40,8 @@ export function EligibilityCheck() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-6 py-4 text-center">
-        <p className="text-sm text-amber-600 dark:text-amber-400">
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/15 px-6 py-4 text-center backdrop-blur-sm">
+        <p className="text-sm font-medium text-amber-300">
           {error instanceof Error ? error.message : "Eligibility check failed"}
         </p>
         <button
@@ -58,11 +58,9 @@ export function EligibilityCheck() {
 
   if (data.eligible) {
     return (
-      <div className="flex flex-col items-center gap-1 rounded-xl border border-green-500/40 bg-green-500/10 px-6 py-4 text-center">
-        <p className="font-medium text-green-600 dark:text-green-400">
-          ✓ You&apos;re eligible
-        </p>
-        <p className="text-sm text-black/60 dark:text-white/60">
+      <div className="flex flex-col items-center gap-1 rounded-xl border border-green-400/40 bg-green-500/15 px-6 py-4 text-center shadow-[0_0_24px_rgba(120,200,90,0.15)] backdrop-blur-sm">
+        <p className="font-semibold text-green-300">✓ You&apos;re eligible</p>
+        <p className="text-sm text-green-100/80">
           This wallet transacted on Ethereum mainnet before <CutoffDate />.
         </p>
       </div>
@@ -70,9 +68,9 @@ export function EligibilityCheck() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-1 rounded-xl border border-red-500/40 bg-red-500/10 px-6 py-4 text-center">
-      <p className="font-medium text-red-600 dark:text-red-400">✗ Not eligible</p>
-      <p className="text-sm text-black/60 dark:text-white/60">
+    <div className="flex flex-col items-center gap-1 rounded-xl border border-red-400/40 bg-red-500/15 px-6 py-4 text-center backdrop-blur-sm">
+      <p className="font-semibold text-red-300">✗ Not eligible</p>
+      <p className="text-sm text-red-100/80">
         This wallet has no Ethereum mainnet transaction before <CutoffDate />.
       </p>
     </div>
