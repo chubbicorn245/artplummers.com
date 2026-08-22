@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ConnectWallet } from "@/components/connect-wallet";
 import { CutoffDate } from "@/components/cutoff-date";
 import { EligibilityCheck } from "@/components/eligibility-check";
@@ -14,6 +15,12 @@ export default function Home() {
       </p>
       <ConnectWallet />
       <EligibilityCheck />
+      <Link
+        href="/whitepaper"
+        className="text-sm underline underline-offset-4 opacity-60 transition-opacity hover:opacity-100"
+      >
+        whitepaper
+      </Link>
     </main>
   );
 }
