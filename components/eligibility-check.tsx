@@ -2,6 +2,7 @@
 
 import { useAccount } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
+import { CutoffDate } from "@/components/cutoff-date";
 
 type EligibilityResponse = {
   address: string;
@@ -62,7 +63,7 @@ export function EligibilityCheck() {
           ✓ You&apos;re eligible
         </p>
         <p className="text-sm text-black/60 dark:text-white/60">
-          This wallet transacted on Ethereum mainnet before November 2021.
+          This wallet transacted on Ethereum mainnet before <CutoffDate />.
         </p>
       </div>
     );
@@ -72,7 +73,7 @@ export function EligibilityCheck() {
     <div className="flex flex-col items-center gap-1 rounded-xl border border-red-500/40 bg-red-500/10 px-6 py-4 text-center">
       <p className="font-medium text-red-600 dark:text-red-400">✗ Not eligible</p>
       <p className="text-sm text-black/60 dark:text-white/60">
-        This wallet has no Ethereum mainnet transaction before November 2021.
+        This wallet has no Ethereum mainnet transaction before <CutoffDate />.
       </p>
     </div>
   );

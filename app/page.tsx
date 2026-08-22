@@ -1,4 +1,5 @@
 import { ConnectWallet } from "@/components/connect-wallet";
+import { CutoffDate } from "@/components/cutoff-date";
 import { EligibilityCheck } from "@/components/eligibility-check";
 
 export default function Home() {
@@ -8,7 +9,7 @@ export default function Home() {
       <p className="text-center">
         Mint an Art Plummer{" "}
         <span className="block text-sm text-black/60 dark:text-white/60">
-          (wallet eligible if tx before November 2021)
+          (wallet eligible if tx before <CutoffDate />)
         </span>
       </p>
       <ConnectWallet />
