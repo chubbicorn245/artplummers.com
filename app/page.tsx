@@ -21,6 +21,12 @@ export default function Home() {
       >
         whitepaper
       </Link>
+      <p className="max-w-md text-center text-xs text-black/40 dark:text-white/40">
+        Disclaimer: Art Plummers have no intrinsic value and carry no
+        expectation of financial return. There is no team and there is no
+        roadmap. They are completely useless and exist for entertainment
+        purposes only.
+      </p>
     </main>
   );
 }
