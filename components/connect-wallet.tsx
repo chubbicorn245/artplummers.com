@@ -1,21 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 
 function truncate(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
+/** Never fires: the "have we hydrated yet" value changes exactly once, and
+ *  React already re-renders at that point. Module-level so the reference is
+ *  stable across renders and useSyncExternalStore doesn't resubscribe. */
+const subscribeToNothing = () => () => {};
+
+/**
+ * False during SSR and the hydration pass, true afterwards. React uses the
+ * server snapshot for both, so markup matches and there's no mismatch — and
+ * unlike a useState/useEffect flag, nothing sets state from an effect.
+ */
+function useHasHydrated() {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false
+  );
+}
+
 export function ConnectWallet() {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
+  const hasHydrated = useHasHydrated();
 
   // Avoid hydration mismatch: wallet state is only known on the client.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+  if (!hasHydrated) return null;
 
   if (isConnected && address) {
     return (
