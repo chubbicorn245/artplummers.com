@@ -67,6 +67,21 @@ the client — signing is what makes the claim true on-chain. A 403 is the
 normal answer for a non-OG wallet, and the mint button falls back to minting
 with an empty `0x` voucher at full price.
 
+### Rate limiting and caching
+
+Both routes spend a metered archive-RPC read per call, and `/api/voucher`
+also spends an ECDSA signature — on endpoints anyone can hit in a loop. So:
+
+- **30 requests per minute per client**, shared across both routes, keyed on
+  `x-forwarded-for`. Over the limit returns `429` with a `Retry-After` header.
+- **Answers are cached by address, forever.** Safe because the answer is a
+  fact about frozen history: whether a wallet transacted before November 2021
+  can never change, and the voucher signed for it is deterministic.
+
+Both are **per-instance** and vanish on cold start, so on serverless they damp
+cost rather than enforce a global budget. A real limit across instances needs
+Redis or Vercel KV — worth adding if the mint draws a crowd.
+
 ## 4. Test
 
 ```bash

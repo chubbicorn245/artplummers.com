@@ -1,7 +1,7 @@
 import { createConfig, http } from "wagmi";
 import { mainnet } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
-import { robinhoodTestnet } from "@/lib/chains";
+import { robinhoodMainnet, robinhoodTestnet } from "@/lib/chains";
 
 /**
  * Two chains, on purpose. Eligibility is a fact about Ethereum mainnet
@@ -10,11 +10,12 @@ import { robinhoodTestnet } from "@/lib/chains";
  * network switch when the wallet is on the wrong one.
  */
 export const config = createConfig({
-  chains: [mainnet, robinhoodTestnet],
+  chains: [mainnet, robinhoodTestnet, robinhoodMainnet],
   connectors: [injected()],
   transports: {
     [mainnet.id]: http(),
     [robinhoodTestnet.id]: http(),
+    [robinhoodMainnet.id]: http(),
   },
   ssr: true,
 });

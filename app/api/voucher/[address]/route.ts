@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { isAddress, type Hex } from "viem";
-import { isOgWallet, mainnetNonceReader } from "@/lib/eligibility";
+import {
+  isOgWallet,
+  mainnetNonceReader,
+  WrongChainError,
+} from "@/lib/eligibility";
 import { signVoucher } from "@/lib/voucher";
 import { artPlumberAddress, mintChain } from "@/lib/contract";
+import {
+  clientKey,
+  eligibilityCache,
+  rateLimiter,
+  voucherCache,
+} from "@/lib/api-guards";
 
 /**
  * Issues the EIP-712 voucher that unlocks a wallet's free mints.
@@ -13,7 +23,7 @@ import { artPlumberAddress, mintChain } from "@/lib/contract";
  * signature, and mints at full price with an empty `0x` instead.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ address: string }> }
 ) {
   const { address } = await params;
@@ -21,6 +31,23 @@ export async function GET(
   if (!isAddress(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
+
+  // Signing costs an archive read and an ECDSA signature, on an endpoint
+  // anyone can hit in a loop. Served-from-cache requests still count: the
+  // limit is about the caller, not about what the call happens to cost.
+  const limit = rateLimiter.check(clientKey(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) },
+      }
+    );
+  }
+
+  const cached = voucherCache.get(address);
+  if (cached) return NextResponse.json({ address, signature: cached });
 
   if (!artPlumberAddress) {
     return NextResponse.json(
@@ -55,8 +82,17 @@ export async function GET(
 
   let eligible: boolean;
   try {
-    eligible = await isOgWallet(address, mainnetNonceReader(rpcUrl));
-  } catch {
+    eligible =
+      eligibilityCache.has(address)
+        ? (eligibilityCache.get(address) as boolean)
+        : await isOgWallet(address, mainnetNonceReader(rpcUrl));
+    eligibilityCache.set(address, eligible);
+  } catch (e) {
+    // A wrong-chain RPC is a deployment mistake, not a transient fault, and
+    // it would otherwise pass silently as "nobody is eligible".
+    if (e instanceof WrongChainError) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
     return NextResponse.json(
       { error: "Could not check eligibility. Please try again." },
       { status: 502 }
@@ -77,6 +113,7 @@ export async function GET(
       artPlumberAddress,
       address
     );
+    voucherCache.set(address, signature);
     return NextResponse.json({ address, signature });
   } catch {
     return NextResponse.json(
