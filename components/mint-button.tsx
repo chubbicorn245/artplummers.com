@@ -38,7 +38,13 @@ export function MintButton() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
-  const [quantity, setQuantity] = useState(1);
+  // Held as a string so the field can be genuinely empty mid-edit. Deriving
+  // it from a number forced an empty field back to "1", which meant typing a
+  // replacement appended to it: clear, type 3, get 13.
+  const [quantityInput, setQuantityInput] = useState("1");
+  const quantity = Number.parseInt(quantityInput, 10);
+  const quantityValid =
+    Number.isInteger(quantity) && quantity >= 1 && quantity <= MAX_PER_TX;
 
   const { data: voucher } = useQuery({
     queryKey: ["voucher", address],
@@ -58,9 +64,16 @@ export function MintButton() {
     abi: artPlumberAbi,
     address: artPlumberAddress,
     functionName: "priceFor",
-    args: address ? [address, BigInt(quantity), voucher ?? NO_VOUCHER] : undefined,
+    args:
+      address && quantityValid
+        ? [address, BigInt(quantity), voucher ?? NO_VOUCHER]
+        : undefined,
     chainId: mintChain.id,
-    query: { enabled: Boolean(address && artPlumberAddress && voucher !== undefined) },
+    query: {
+      enabled: Boolean(
+        address && artPlumberAddress && voucher !== undefined && quantityValid
+      ),
+    },
   });
 
   const { writeContract, data: txHash, isPending, error, reset } = useWriteContract();
@@ -141,13 +154,20 @@ export function MintButton() {
           type="number"
           min={1}
           max={MAX_PER_TX}
-          value={quantity}
+          value={quantityInput}
           disabled={busy}
           onChange={(e) => {
-            const n = Number(e.target.value);
-            if (Number.isInteger(n)) {
-              setQuantity(Math.min(MAX_PER_TX, Math.max(1, n)));
+            const digits = e.target.value.replace(/[^0-9]/g, "");
+            if (digits === "") {
+              setQuantityInput("");
+              return;
             }
+            setQuantityInput(
+              String(Math.min(MAX_PER_TX, Math.max(1, Number(digits))))
+            );
+          }}
+          onBlur={() => {
+            if (!quantityValid) setQuantityInput("1");
           }}
           className="w-20 rounded-lg border border-black/15 bg-transparent px-3 py-1.5 text-center dark:border-white/20"
         />
@@ -164,14 +184,16 @@ export function MintButton() {
             chainId: mintChain.id,
           })
         }
-        disabled={busy || isPricing || price === undefined}
+        disabled={busy || isPricing || price === undefined || !quantityValid}
         className="rounded-full bg-foreground px-8 py-3 font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-50"
       >
         {isPending
           ? "Confirm in wallet…"
           : isConfirming
             ? "Minting…"
-            : `Mint ${quantity} — ${priceLabel}`}
+            : quantityValid
+              ? `Mint ${quantity} — ${priceLabel}`
+              : "Mint"}
       </button>
 
       <p className="text-xs text-[color:var(--foreground)]/50">

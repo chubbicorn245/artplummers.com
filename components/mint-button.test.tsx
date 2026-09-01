@@ -75,6 +75,43 @@ describe("MintButton", () => {
     ).toBeTruthy();
   });
 
+  it("stays empty while you clear it, instead of snapping back to 1", async () => {
+    const h = createHarness({ price: ONE_TOKEN });
+    await h.renderConnected(<MintButton />);
+    await screen.findByRole("button", { name: /Mint 1 —/ });
+
+    const input = setQuantity("");
+
+    expect(input.value).toBe("");
+    expect(
+      (screen.getByRole("button", { name: /^Mint/ }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true);
+  });
+
+  it("lets you type a new quantity after clearing the field", async () => {
+    const h = createHarness({ price: ONE_TOKEN });
+    await h.renderConnected(<MintButton />);
+    await screen.findByRole("button", { name: /Mint 1 —/ });
+
+    const input = setQuantity("");
+    await userEvent.type(input, "3");
+
+    // Snapping the cleared field back to 1 would make this "13".
+    expect(input.value).toBe("3");
+  });
+
+  it("restores a usable quantity when you leave the field empty", async () => {
+    const h = createHarness({ price: ONE_TOKEN });
+    await h.renderConnected(<MintButton />);
+    await screen.findByRole("button", { name: /Mint 1 —/ });
+
+    const input = setQuantity("");
+    fireEvent.blur(input);
+
+    expect(input.value).toBe("1");
+  });
+
   it("clamps the quantity to the per-transaction maximum", async () => {
     const h = createHarness({ price: ONE_TOKEN });
     await h.renderConnected(<MintButton />);
