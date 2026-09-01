@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatEther, type Hex } from "viem";
+import { formatEther, parseEventLogs, zeroAddress, type Hex } from "viem";
 import {
   useAccount,
   useChainId,
@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { artPlumberAbi } from "@/lib/abi/art-plumber";
 import { artPlumberAddress, mintChain } from "@/lib/contract";
 import { MAX_PER_TX } from "@/lib/economics";
+import { MintedReveal } from "@/components/minted-reveal";
 
 /** No voucher: the full-price path. The contract treats this as "no discount". */
 const NO_VOUCHER = "0x" as Hex;
@@ -77,10 +78,20 @@ export function MintButton() {
   });
 
   const { writeContract, data: txHash, isPending, error, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: txHash,
-    chainId: mintChain.id,
-  });
+  const {
+    data: receipt,
+    isLoading: isConfirming,
+    isSuccess,
+  } = useWaitForTransactionReceipt({ hash: txHash, chainId: mintChain.id });
+
+  // The ids are not in the transaction's return value — a receipt carries no
+  // return data — but every mint emits Transfer from the zero address, and
+  // those logs name them exactly.
+  const mintedIds = receipt
+    ? parseEventLogs({ abi: artPlumberAbi, eventName: "Transfer", logs: receipt.logs })
+        .filter((log) => log.args.from === zeroAddress)
+        .map((log) => log.args.id)
+    : [];
 
   // Bound to a local so the narrowing below survives into the onClick
   // closure — an imported binding loses it.
@@ -111,8 +122,10 @@ export function MintButton() {
     return (
       <div className="flex flex-col items-center gap-2 rounded-xl border border-green-400/40 bg-green-500/15 px-6 py-4 text-center backdrop-blur-sm">
         <p className="font-semibold text-green-300">
-          Minted {quantity} Art Plummer{quantity > 1 ? "s" : ""}
+          Minted {mintedIds.length || quantity} Art Plummer
+          {(mintedIds.length || quantity) > 1 ? "s" : ""}
         </p>
+        <MintedReveal tokenIds={mintedIds} />
         <a
           href={`${mintChain.blockExplorers.default.url}/tx/${txHash}`}
           target="_blank"

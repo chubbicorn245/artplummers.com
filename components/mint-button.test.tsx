@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { mainnet } from "wagmi/chains";
 import { createHarness } from "@/test/harness";
@@ -120,6 +120,63 @@ describe("MintButton", () => {
     const input = setQuantity("99");
 
     await waitFor(() => expect(Number(input.value)).toBe(20));
+  });
+
+  it("reveals the art and traits of what was just minted", async () => {
+    const h = createHarness({ price: FREE, og: true });
+    await h.renderConnected(<MintButton />);
+    setQuantity("2");
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Mint 2 — free/ })
+    );
+
+    // Ids come from the receipt's Transfer logs, not from a guess.
+    expect(await screen.findByAltText("Art Plumber #1")).toBeTruthy();
+    expect(await screen.findByAltText("Art Plumber #2")).toBeTruthy();
+
+    const reveal = screen.getByTestId("minted-reveal");
+    expect(reveal.querySelectorAll("img")).toHaveLength(2);
+    // The artwork is the on-chain SVG itself, inlined as a data URI.
+    expect(
+      screen.getAllByAltText(/Art Plumber/)[0].getAttribute("src")
+    ).toMatch(/^data:image\/svg\+xml;base64,/);
+    // Traits render alongside it.
+    expect(within(reveal).getAllByText("Hand Only").length).toBe(2);
+    expect(within(reveal).getAllByText("Purple").length).toBe(2);
+  });
+
+  it("calls out a Perfect Plumber", async () => {
+    const h = createHarness({
+      price: FREE,
+      og: true,
+      attributes: [
+        { trait_type: "Plungers", value: "Double" },
+        { trait_type: "Suckers Match", value: "Yes" },
+        { trait_type: "Sticks Match", value: "Yes" },
+        { trait_type: "Perfect Plumber", value: "Yes" },
+      ],
+    });
+    await h.renderConnected(<MintButton />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Mint 1 — free/ })
+    );
+
+    const reveal = await screen.findByTestId("minted-reveal");
+    expect(within(reveal).getByText("Perfect Plumber")).toBeTruthy();
+    // The trait row is not duplicated by the callout.
+    expect(within(reveal).getAllByText("Perfect Plumber")).toHaveLength(1);
+  });
+
+  it("degrades to a placeholder when a token's metadata is unreadable", async () => {
+    const h = createHarness({ price: FREE, og: true, brokenTokenUri: true });
+    await h.renderConnected(<MintButton />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: /Mint 1 — free/ })
+    );
+
+    const reveal = await screen.findByTestId("minted-reveal");
+    expect(within(reveal).getByText(/artwork unavailable/i)).toBeTruthy();
+    expect(within(reveal).getByText("#1")).toBeTruthy();
   });
 
   it("refetches the price after a mint, so a spent free allowance is not requoted", async () => {

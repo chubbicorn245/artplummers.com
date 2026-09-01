@@ -6,7 +6,13 @@ import { WagmiProvider, createConfig, http } from "wagmi";
 import { connect } from "wagmi/actions";
 import { mainnet } from "wagmi/chains";
 import { mock } from "wagmi/connectors";
-import { decodeFunctionData, encodeFunctionResult, type Chain } from "viem";
+import {
+  decodeFunctionData,
+  encodeEventTopics,
+  encodeFunctionResult,
+  zeroAddress,
+  type Chain,
+} from "viem";
 import { artPlumberAbi } from "@/lib/abi/art-plumber";
 import { robinhoodTestnet } from "@/lib/chains";
 
@@ -25,7 +31,26 @@ type HarnessOptions = {
   price?: bigint;
   /** Whether /api/voucher issues a voucher (OG) or 403s. */
   og?: boolean;
+  /** Traits every minted token reports, as tokenURI attributes. */
+  attributes?: Array<{ trait_type: string; value: string }>;
+  /** Make tokenURI return something undecodable, to test degradation. */
+  brokenTokenUri?: boolean;
 };
+
+const DEFAULT_ATTRIBUTES = [
+  { trait_type: "Plungers", value: "Hand Only" },
+  { trait_type: "Held Plunger Sucker", value: "Sky" },
+  { trait_type: "Suit", value: "Purple" },
+  { trait_type: "Boots", value: "Midnight" },
+  { trait_type: "Suckers Match", value: "No" },
+  { trait_type: "Sticks Match", value: "No" },
+  { trait_type: "Uniform Match", value: "No" },
+];
+
+/** A 1x1 SVG, shaped like the contract's data URI so <img> gets a real src. */
+const SVG_DATA_URI = `data:image/svg+xml;base64,${btoa(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"></svg>'
+)}`;
 
 /**
  * A real wagmi config over a faked `fetch`.
@@ -41,10 +66,47 @@ export function createHarness({
   chain,
   price = BigInt(0),
   og = false,
+  attributes = DEFAULT_ATTRIBUTES,
+  brokenTokenUri = false,
 }: HarnessOptions = {}) {
   const connectedChain = chain ?? robinhoodTestnet;
-  const calls = { priceFor: 0, mint: 0, voucher: 0 };
+  const calls = { priceFor: 0, mint: 0, voucher: 0, tokenURI: 0 };
   let priceForResult = price;
+  /** Ids the pending mint created, derived from the transaction it sent. */
+  let mintedIds: bigint[] = [];
+  let nextId = BigInt(1);
+
+  function tokenUriFor(id: bigint) {
+    if (brokenTokenUri) return "https://example.com/not-on-chain.json";
+    return `data:application/json;base64,${btoa(
+      JSON.stringify({
+        name: `Art Plumber #${id}`,
+        description: "test",
+        image: SVG_DATA_URI,
+        attributes,
+      })
+    )}`;
+  }
+
+  /** Every mint emits Transfer from the zero address; that is how the UI
+   *  learns which ids it just got. */
+  function transferLog(id: bigint, index: number) {
+    return {
+      address: process.env.NEXT_PUBLIC_ART_PLUMBER_ADDRESS,
+      topics: encodeEventTopics({
+        abi: artPlumberAbi,
+        eventName: "Transfer",
+        args: { from: zeroAddress, to: TEST_ACCOUNT, id },
+      }),
+      data: "0x",
+      blockNumber: "0x1",
+      blockHash: BLOCK_HASH,
+      transactionHash: TX_HASH,
+      transactionIndex: "0x0",
+      logIndex: `0x${index.toString(16)}`,
+      removed: false,
+    };
+  }
 
   const receipt = {
     transactionHash: TX_HASH,
@@ -83,19 +145,36 @@ export function createHarness({
       case "eth_call": {
         const [tx] = params as [{ data: `0x${string}` }];
         const { functionName } = decodeFunctionData({ abi: artPlumberAbi, data: tx.data });
-        if (functionName !== "priceFor") throw new Error(`unexpected call: ${functionName}`);
-        calls.priceFor++;
-        return encodeFunctionResult({
-          abi: artPlumberAbi,
-          functionName: "priceFor",
-          result: priceForResult,
-        });
+        const decoded = decodeFunctionData({ abi: artPlumberAbi, data: tx.data });
+        if (functionName === "priceFor") {
+          calls.priceFor++;
+          return encodeFunctionResult({
+            abi: artPlumberAbi,
+            functionName: "priceFor",
+            result: priceForResult,
+          });
+        }
+        if (functionName === "tokenURI") {
+          calls.tokenURI++;
+          const [id] = decoded.args as [bigint];
+          return encodeFunctionResult({
+            abi: artPlumberAbi,
+            functionName: "tokenURI",
+            result: tokenUriFor(id),
+          });
+        }
+        throw new Error(`unexpected call: ${functionName}`);
       }
-      case "eth_sendTransaction":
+      case "eth_sendTransaction": {
         calls.mint++;
+        const [tx] = params as [{ data: `0x${string}` }];
+        const { args } = decodeFunctionData({ abi: artPlumberAbi, data: tx.data });
+        const quantity = Number((args as [bigint, string])[0]);
+        mintedIds = Array.from({ length: quantity }, () => nextId++);
         return TX_HASH;
+      }
       case "eth_getTransactionReceipt":
-        return receipt;
+        return { ...receipt, logs: mintedIds.map(transferLog) };
       case "eth_getTransactionByHash":
         return { hash: TX_HASH, blockHash: BLOCK_HASH, blockNumber: "0x1", type: "0x2" };
       default:
