@@ -74,11 +74,28 @@ npm test
 ```
 
 Covers `lib/eligibility.ts` (the nonce rule, via an injected reader — no
-network) and `lib/voucher.ts`. The voucher tests pin the EIP-712 digest
-against one computed independently with Foundry: if viem's domain or type
-definitions ever drift from the contract's, the signature would fail
-`ecrecover` on-chain with no other symptom, and that assertion is what
-catches it.
+network), `lib/voucher.ts`, and the `MintButton` component.
+
+The voucher tests pin the EIP-712 digest against one computed independently
+with Foundry: if viem's domain or type definitions ever drift from the
+contract's, the signature would fail `ecrecover` on-chain with no other
+symptom, and that assertion is what catches it.
+
+The component tests render against a **real wagmi config over a faked
+`fetch`** (`test/harness.tsx`) — nothing about wagmi or react-query is
+mocked, so they exercise the hook, cache and query-key behaviour that ships.
+The fake sits at the fetch layer rather than being a viem transport because
+wagmi's mock connector bypasses the config transport and posts straight to
+`chain.rpcUrls.default.http[0]`.
+
+Two things to know when adding to them:
+
+- Render **then** connect. Connecting first leaves the hooks subscribed
+  after the state changed, so they never observe it and report
+  `disconnected`.
+- Use `fireEvent.change` for the quantity field. jsdom does not support text
+  selection on `input[type=number]`, so `userEvent.type` appends to the
+  existing value instead of replacing it.
 
 ## 5. How the mint works
 
