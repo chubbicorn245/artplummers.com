@@ -12,6 +12,7 @@ import {
   eligibilityCache,
   rateLimiter,
   voucherCache,
+  voucherCacheKey,
 } from "@/lib/api-guards";
 
 /**
@@ -46,15 +47,18 @@ export async function GET(
     );
   }
 
-  const cached = voucherCache.get(address);
-  if (cached) return NextResponse.json({ address, signature: cached });
-
   if (!artPlumberAddress) {
     return NextResponse.json(
       { error: "Minting is not live yet" },
       { status: 503 }
     );
   }
+
+  // Keyed on the contract too, so a redeploy cannot serve signatures bound
+  // to the old address.
+  const cacheKey = voucherCacheKey(mintChain.id, artPlumberAddress, address);
+  const cached = voucherCache.get(cacheKey);
+  if (cached) return NextResponse.json({ address, signature: cached });
 
   const rpcUrl = process.env.MAINNET_RPC_URL;
   const signerKey = process.env.ELIGIBILITY_SIGNER_PRIVATE_KEY;
@@ -113,7 +117,7 @@ export async function GET(
       artPlumberAddress,
       address
     );
-    voucherCache.set(address, signature);
+    voucherCache.set(cacheKey, signature);
     return NextResponse.json({ address, signature });
   } catch {
     return NextResponse.json(
