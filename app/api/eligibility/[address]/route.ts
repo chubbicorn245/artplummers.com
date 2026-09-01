@@ -6,19 +6,31 @@ import {
   mainnetNonceReader,
   WrongChainError,
 } from "@/lib/eligibility";
+import { clientKey, eligibilityCache, rateLimiter } from "@/lib/api-guards";
 
 /**
  * Reports whether a wallet qualifies for the free mint. This is NOT a gate:
  * `eligible: false` wallets can still mint, at full price.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ address: string }> }
 ) {
   const { address } = await params;
 
   if (!isAddress(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  }
+
+  const limit = rateLimiter.check(clientKey(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) },
+      }
+    );
   }
 
   const rpcUrl = process.env.MAINNET_RPC_URL;
@@ -30,8 +42,12 @@ export async function GET(
   }
 
   try {
-    // Historical nonce lookup — requires an archive-capable RPC
-    const eligible = await isOgWallet(address, mainnetNonceReader(rpcUrl));
+    // Historical nonce lookup — requires an archive-capable RPC. Cached
+    // because the answer is a fact about frozen history.
+    const eligible = eligibilityCache.has(address)
+      ? (eligibilityCache.get(address) as boolean)
+      : await isOgWallet(address, mainnetNonceReader(rpcUrl));
+    eligibilityCache.set(address, eligible);
 
     return NextResponse.json({
       address,
