@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { isAddress, type Hex } from "viem";
-import { isOgWallet, mainnetNonceReader } from "@/lib/eligibility";
+import {
+  isOgWallet,
+  mainnetNonceReader,
+  WrongChainError,
+} from "@/lib/eligibility";
 import { signVoucher } from "@/lib/voucher";
 import { artPlumberAddress, mintChain } from "@/lib/contract";
 
@@ -56,7 +60,12 @@ export async function GET(
   let eligible: boolean;
   try {
     eligible = await isOgWallet(address, mainnetNonceReader(rpcUrl));
-  } catch {
+  } catch (e) {
+    // A wrong-chain RPC is a deployment mistake, not a transient fault, and
+    // it would otherwise pass silently as "nobody is eligible".
+    if (e instanceof WrongChainError) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
     return NextResponse.json(
       { error: "Could not check eligibility. Please try again." },
       { status: 502 }

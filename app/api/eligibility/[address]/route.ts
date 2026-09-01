@@ -4,6 +4,7 @@ import {
   CUTOFF_BLOCK,
   isOgWallet,
   mainnetNonceReader,
+  WrongChainError,
 } from "@/lib/eligibility";
 
 /**
@@ -37,7 +38,12 @@ export async function GET(
       eligible,
       cutoffBlock: CUTOFF_BLOCK.toString(),
     });
-  } catch {
+  } catch (e) {
+    // A wrong-chain RPC is a deployment mistake, not a transient fault, and
+    // it would otherwise pass silently as "nobody is eligible".
+    if (e instanceof WrongChainError) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
+    }
     return NextResponse.json(
       { error: "Could not check eligibility. Please try again." },
       { status: 502 }
