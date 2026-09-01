@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CutoffDate } from "@/components/cutoff-date";
+import {
+  FREE_ALLOWANCE,
+  MAX_PER_TX,
+  MAX_SUPPLY,
+  MINT_PRICE_ETH,
+} from "@/lib/economics";
 
 export const metadata: Metadata = {
   title: "Whitepaper — Art Plummers",
   description:
-    "How Art Plummers works: pre–November 2021 wallet eligibility, onchain minting, and fully onchain generative art.",
+    "How Art Plummers works: an open mint with a free allocation for pre–November 2021 wallets, and fully onchain generative art.",
 };
 
 export default function Whitepaper() {
@@ -14,32 +20,53 @@ export default function Whitepaper() {
       <header className="flex flex-col gap-3">
         <h1 className="text-3xl font-bold tracking-tight">Whitepaper</h1>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
-          Art Plummers are pixel-art frog plumbers, minted by early Ethereum
-          wallets and generated entirely onchain. This page explains who can
-          mint, how eligibility is verified, and how the art works.
+          Art Plummers are pixel-art frog plumbers, generated entirely onchain.
+          Anyone can mint one; wallets that were already using Ethereum before{" "}
+          <CutoffDate /> get theirs free. This page explains what it costs, how
+          that check is verified, and how the art works.
         </p>
       </header>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Who can mint</h2>
+        <h2 className="text-xl font-semibold">What it costs</h2>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
-          Only wallets that made at least one Ethereum mainnet transaction
-          before <CutoffDate /> can mint an Art Plummer. If your wallet was
-          active before the cutoff, you&apos;re eligible. Eligibility is a
-          historical fact already recorded on Ethereum, so it&apos;s fixed — it
-          isn&apos;t something that can be added or changed after the fact.
+          The collection is {MAX_SUPPLY.toLocaleString()} Art Plummers, and the
+          mint is open to everyone — there is no allowlist and no gate. What
+          the <CutoffDate /> check decides is the price, not the entry:
+        </p>
+        <ul className="flex flex-col gap-2 text-sm leading-relaxed text-black/70 dark:text-white/70">
+          <li>
+            <span className="font-medium">
+              Wallets active before <CutoffDate />
+            </span>{" "}
+            mint their first {FREE_ALLOWANCE} free, then pay {MINT_PRICE_ETH}{" "}
+            ETH for every one after that.
+          </li>
+          <li>
+            <span className="font-medium">Every other wallet</span> pays{" "}
+            {MINT_PRICE_ETH} ETH per Plummer.
+          </li>
+        </ul>
+        <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
+          Whether a wallet qualifies is a historical fact already recorded on
+          Ethereum, so it&apos;s fixed — it isn&apos;t something that can be
+          added or changed after the fact.
         </p>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">How minting is verified</h2>
+        <h2 className="text-xl font-semibold">
+          How the free mint is verified
+        </h2>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
-          Eligibility is checked by reading your wallet&apos;s{" "}
+          The check reads your wallet&apos;s{" "}
           <span className="font-medium">nonce</span> (its total sent-transaction
           count) as of block <span className="font-mono">13,527,858</span> — the
           last mainnet block mined before 2021-11-01 00:00 UTC. If that nonce is
           greater than zero, the wallet had already sent a transaction before{" "}
-          <CutoffDate />, so it&apos;s eligible.
+          <CutoffDate />, so its first {FREE_ALLOWANCE} Plummers are free.
+          Wallets that don&apos;t qualify aren&apos;t turned away; they simply
+          pay {MINT_PRICE_ETH} ETH per Plummer.
         </p>
       </section>
 
@@ -54,21 +81,34 @@ export default function Whitepaper() {
         </p>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
           Checking the nonce at a fixed historical block needs none of that.
-          There is no list to maintain and nothing to trust: eligibility is
-          derived live from Ethereum&apos;s own history, it&apos;s the same for
-          everyone, and it can&apos;t be secretly changed. It&apos;s
-          permissionless and self-serve — connect a wallet and find out.
+          There is no list to maintain and nothing to trust: the free
+          allocation is derived live from Ethereum&apos;s own history, it&apos;s
+          the same for everyone, and it can&apos;t be secretly changed.
+          It&apos;s permissionless and self-serve — connect a wallet and find
+          out.
         </p>
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Mint limit</h2>
+        <h2 className="text-xl font-semibold">How many you can mint</h2>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
-          Each eligible wallet can mint at most{" "}
-          <span className="font-medium">3</span> Art Plummers. Eligibility is
-          per-wallet, so if you also control another wallet that transacted
-          before <CutoffDate />, you can switch to that wallet and mint from it
-          too. Every eligible wallet gets its own allocation of up to three.
+          There is <span className="font-medium">no per-wallet limit</span>.
+          One wallet can mint as many Art Plummers as it wants, right up to the
+          full {MAX_SUPPLY.toLocaleString()} — so the collection can be bought
+          out by whoever shows up with the ETH. The {FREE_ALLOWANCE} free
+          Plummers are the only thing a wallet gets a limited amount of.
+        </p>
+        <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
+          A single transaction mints at most{" "}
+          <span className="font-medium">{MAX_PER_TX}</span>. That&apos;s a gas
+          limit, not an allocation: minting is a loop, and an unbounded batch
+          would cost more gas than a block allows. Want more than {MAX_PER_TX}?
+          Send another transaction.
+        </p>
+        <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
+          The free allocation is per-wallet, so if you also control another
+          wallet that transacted before <CutoffDate />, you can switch to it
+          and mint its {FREE_ALLOWANCE} free Plummers too.
         </p>
       </section>
 
@@ -84,7 +124,7 @@ export default function Whitepaper() {
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
           Because the outcome is derived at mint time, a determined minter could
           try to <span className="italic">work</span> the randomness — timing
-          their mint, using multiple eligible wallets, or otherwise engineering
+          their mint, minting from several wallets, or otherwise engineering
           the conditions to chase a specific color match. That&apos;s allowed.
           If someone puts in that much effort and lands the match they were
           after, they earned it — they worked hard for it, and they deserve it.

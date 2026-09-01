@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { ConnectWallet } from "@/components/connect-wallet";
 import { CutoffDate } from "@/components/cutoff-date";
-import { EligibilityCheck } from "@/components/eligibility-check";
+import { MintTerms } from "@/components/mint-terms";
+import {
+  FREE_ALLOWANCE,
+  MAX_SUPPLY,
+  MINT_PRICE_ETH,
+} from "@/lib/economics";
 
 export default function Home() {
   return (
@@ -41,11 +46,13 @@ export default function Home() {
         <p className="text-center">
           Mint an Art Plummer{" "}
           <span className="block text-sm text-[color:var(--foreground)]/60">
-            (wallet eligible if tx before <CutoffDate />)
+            {MAX_SUPPLY.toLocaleString()} onchain frogs · {MINT_PRICE_ETH} ETH
+            each · wallets active before <CutoffDate /> mint {FREE_ALLOWANCE}{" "}
+            free
           </span>
         </p>
         <ConnectWallet />
-        <EligibilityCheck />
+        <MintTerms />
         <Link
           href="/whitepaper"
           className="text-sm underline underline-offset-4 opacity-60 transition-opacity hover:opacity-100"
