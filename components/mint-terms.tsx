@@ -3,9 +3,15 @@
 import { useAccount } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { CutoffDate } from "@/components/cutoff-date";
+import {
+  FREE_ALLOWANCE,
+  MINT_PRICE_ETH,
+  WALLET_LIMIT,
+} from "@/lib/economics";
 
 type EligibilityResponse = {
   address: string;
+  /** True iff the wallet qualifies for the free mint — not a gate on minting. */
   eligible: boolean;
   cutoffBlock: string;
 };
@@ -17,7 +23,12 @@ async function fetchEligibility(address: string): Promise<EligibilityResponse> {
   return body;
 }
 
-export function EligibilityCheck() {
+/**
+ * What the connected wallet will pay. Every wallet can mint; the pre–November
+ * 2021 check only decides whether the first FREE_ALLOWANCE tokens are free, so
+ * neither outcome is a rejection.
+ */
+export function MintTerms() {
   const { address, isConnected } = useAccount();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -32,9 +43,7 @@ export function EligibilityCheck() {
 
   if (isLoading) {
     return (
-      <p className="animate-pulse text-sm text-white/70">
-        Checking eligibility…
-      </p>
+      <p className="animate-pulse text-sm text-white/70">Checking wallet…</p>
     );
   }
 
@@ -59,19 +68,25 @@ export function EligibilityCheck() {
   if (data.eligible) {
     return (
       <div className="flex flex-col items-center gap-1 rounded-xl border border-green-400/40 bg-green-500/15 px-6 py-4 text-center shadow-[0_0_24px_rgba(120,200,90,0.15)] backdrop-blur-sm">
-        <p className="font-semibold text-green-300">✓ You&apos;re eligible</p>
+        <p className="font-semibold text-green-300">
+          ✓ OG wallet — your first {FREE_ALLOWANCE} are free
+        </p>
         <p className="text-sm text-green-100/80">
           This wallet transacted on Ethereum mainnet before <CutoffDate />.
+          After that it&apos;s {MINT_PRICE_ETH} ETH each, up to {WALLET_LIMIT}{" "}
+          in total.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center gap-1 rounded-xl border border-red-400/40 bg-red-500/15 px-6 py-4 text-center backdrop-blur-sm">
-      <p className="font-semibold text-red-300">✗ Not eligible</p>
-      <p className="text-sm text-red-100/80">
-        This wallet has no Ethereum mainnet transaction before <CutoffDate />.
+    <div className="flex flex-col items-center gap-1 rounded-xl border border-black/15 bg-black/[0.03] px-6 py-4 text-center backdrop-blur-sm dark:border-white/20 dark:bg-white/[0.06]">
+      <p className="font-semibold">{MINT_PRICE_ETH} ETH each</p>
+      <p className="text-sm text-[color:var(--foreground)]/70">
+        This wallet has no Ethereum mainnet transaction before <CutoffDate />,
+        so the free mint doesn&apos;t apply — but you can still mint up to{" "}
+        {WALLET_LIMIT}.
       </p>
     </div>
   );
