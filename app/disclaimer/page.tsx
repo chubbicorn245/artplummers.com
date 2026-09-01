@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 const P = "text-sm leading-relaxed text-black/70 dark:text-white/70";
-const CONTACT = "info@artplummer.com";
+const CONTACT = "info@artplummers.com";
 
 export default function Disclaimer() {
   return (

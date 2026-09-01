@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const P = "text-sm leading-relaxed text-black/70 dark:text-white/70";
 const LI = "text-sm leading-relaxed text-black/70 dark:text-white/70";
-const CONTACT = "info@artplummer.com";
+const CONTACT = "info@artplummers.com";
 const UPDATED = "September 1, 2026";
 
 export default function Privacy() {
