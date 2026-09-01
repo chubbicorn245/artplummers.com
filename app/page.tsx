@@ -58,7 +58,7 @@ export default function Home() {
         <div className="flex gap-4">
           {[
             { href: "/whitepaper", label: "whitepaper" },
-            { href: "/terms", label: "terms" },
+            { href: "/disclaimer", label: "disclaimer" },
             { href: "/privacy", label: "privacy" },
           ].map(({ href, label }) => (
             <Link

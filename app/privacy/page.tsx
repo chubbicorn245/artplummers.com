@@ -115,8 +115,8 @@ export default function Privacy() {
         <Link href="/" className="text-sm underline underline-offset-4 hover:opacity-70">
           ← back home
         </Link>
-        <Link href="/terms" className="text-sm underline underline-offset-4 hover:opacity-70">
-          terms
+        <Link href="/disclaimer" className="text-sm underline underline-offset-4 hover:opacity-70">
+          disclaimer
         </Link>
       </div>
     </main>
