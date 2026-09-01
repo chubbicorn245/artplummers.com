@@ -55,12 +55,21 @@ export default function Home() {
         <ConnectWallet />
         <MintTerms />
         <MintButton />
-        <Link
-          href="/whitepaper"
-          className="text-sm underline underline-offset-4 opacity-60 transition-opacity hover:opacity-100"
-        >
-          whitepaper
-        </Link>
+        <div className="flex gap-4">
+          {[
+            { href: "/whitepaper", label: "whitepaper" },
+            { href: "/disclaimer", label: "disclaimer" },
+            { href: "/privacy", label: "privacy" },
+          ].map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-sm underline underline-offset-4 opacity-60 transition-opacity hover:opacity-100"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
         <p className="max-w-md text-center text-xs text-[color:var(--foreground)]/50">
           Disclaimer: Art Plummers have no intrinsic value and carry no
           expectation of financial return. There is no team and there is no
