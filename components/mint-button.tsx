@@ -50,7 +50,11 @@ export function MintButton() {
   // The contract is the authority on price: free tokens are spent first, so
   // the split depends on how much of the allowance this wallet has used.
   // mint() requires msg.value to match exactly.
-  const { data: price, isLoading: isPricing } = useReadContract({
+  const {
+    data: price,
+    isLoading: isPricing,
+    refetch: refetchPrice,
+  } = useReadContract({
     abi: artPlumberAbi,
     address: artPlumberAddress,
     functionName: "priceFor",
@@ -105,7 +109,15 @@ export function MintButton() {
           View transaction
         </a>
         <button
-          onClick={() => reset()}
+          onClick={() => {
+            // The price query is keyed on wallet/quantity/voucher, none of
+            // which change when a mint succeeds — but the wallet's free
+            // allowance does. Without this refetch the form comes back
+            // quoting the pre-mint price, and minting again reverts
+            // WRONG_PRICE.
+            refetchPrice();
+            reset();
+          }}
           className="text-sm underline underline-offset-4 opacity-60 hover:opacity-100"
         >
           Mint more
