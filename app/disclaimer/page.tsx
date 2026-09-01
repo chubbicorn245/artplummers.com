@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 const P = "text-sm leading-relaxed text-black/70 dark:text-white/70";
+const CONTACT = "info@artplummer.com";
 
 export default function Disclaimer() {
   return (
@@ -92,7 +93,12 @@ export default function Disclaimer() {
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Questions</h2>
         <p className={P}>
-          <span className="font-medium">[CONTACT]</span>
+          <a
+            href={`mailto:${CONTACT}`}
+            className="font-medium underline underline-offset-4 hover:opacity-70"
+          >
+            {CONTACT}
+          </a>
         </p>
       </section>
 

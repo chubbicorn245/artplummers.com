@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 
 const P = "text-sm leading-relaxed text-black/70 dark:text-white/70";
 const LI = "text-sm leading-relaxed text-black/70 dark:text-white/70";
+const CONTACT = "info@artplummer.com";
+const UPDATED = "September 1, 2026";
 
 export default function Privacy() {
   return (
@@ -17,7 +19,7 @@ export default function Privacy() {
       <header className="flex flex-col gap-3">
         <h1 className="text-3xl font-bold tracking-tight">Privacy</h1>
         <p className={P}>
-          Last updated <span className="font-medium">[DATE]</span>. There are no
+          Last updated <span className="font-medium">{UPDATED}</span>. There are no
           accounts, no sign-up, no analytics, no advertising and no database.
           This page describes the whole of it.
         </p>
@@ -107,7 +109,13 @@ export default function Privacy() {
         <p className={P}>
           For anything about this page, including a request to see or delete
           what little we hold off-chain, contact{" "}
-          <span className="font-medium">[CONTACT]</span>.
+          <a
+            href={`mailto:${CONTACT}`}
+            className="font-medium underline underline-offset-4 hover:opacity-70"
+          >
+            {CONTACT}
+          </a>
+          .
         </p>
       </section>
 
