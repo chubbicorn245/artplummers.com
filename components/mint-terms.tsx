@@ -3,11 +3,7 @@
 import { useAccount } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { CutoffDate } from "@/components/cutoff-date";
-import {
-  FREE_ALLOWANCE,
-  MINT_PRICE_ETH,
-  WALLET_LIMIT,
-} from "@/lib/economics";
+import { FREE_ALLOWANCE, MINT_PRICE_ETH } from "@/lib/economics";
 
 type EligibilityResponse = {
   address: string;
@@ -73,8 +69,7 @@ export function MintTerms() {
         </p>
         <p className="text-sm text-green-100/80">
           This wallet transacted on Ethereum mainnet before <CutoffDate />.
-          After that it&apos;s {MINT_PRICE_ETH} ETH each, up to {WALLET_LIMIT}{" "}
-          in total.
+          After that it&apos;s {MINT_PRICE_ETH} ETH each, as many as you like.
         </p>
       </div>
     );
@@ -85,8 +80,8 @@ export function MintTerms() {
       <p className="font-semibold">{MINT_PRICE_ETH} ETH each</p>
       <p className="text-sm text-[color:var(--foreground)]/70">
         This wallet has no Ethereum mainnet transaction before <CutoffDate />,
-        so the free mint doesn&apos;t apply — but you can still mint up to{" "}
-        {WALLET_LIMIT}.
+        so the free mint doesn&apos;t apply — but you can still mint as many as
+        you like.
       </p>
     </div>
   );

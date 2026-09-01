@@ -3,10 +3,9 @@ import Link from "next/link";
 import { CutoffDate } from "@/components/cutoff-date";
 import {
   FREE_ALLOWANCE,
+  MAX_PER_TX,
   MAX_SUPPLY,
   MINT_PRICE_ETH,
-  PAID_AFTER_FREE,
-  WALLET_LIMIT,
 } from "@/lib/economics";
 
 export const metadata: Metadata = {
@@ -41,7 +40,7 @@ export default function Whitepaper() {
               Wallets active before <CutoffDate />
             </span>{" "}
             mint their first {FREE_ALLOWANCE} free, then pay {MINT_PRICE_ETH}{" "}
-            ETH for up to {PAID_AFTER_FREE} more.
+            ETH for every one after that.
           </li>
           <li>
             <span className="font-medium">Every other wallet</span> pays{" "}
@@ -91,18 +90,25 @@ export default function Whitepaper() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Mint limit</h2>
+        <h2 className="text-xl font-semibold">How many you can mint</h2>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
-          Any one wallet can mint at most{" "}
-          <span className="font-medium">{WALLET_LIMIT}</span> Art Plummers. The
-          free allocation is carved out of that cap rather than added to it: a
-          qualifying wallet gets {FREE_ALLOWANCE} free and {PAID_AFTER_FREE}{" "}
-          paid, for {WALLET_LIMIT} total — not {WALLET_LIMIT + FREE_ALLOWANCE}.
+          There is <span className="font-medium">no per-wallet limit</span>.
+          One wallet can mint as many Art Plummers as it wants, right up to the
+          full {MAX_SUPPLY.toLocaleString()} — so the collection can be bought
+          out by whoever shows up with the ETH. The {FREE_ALLOWANCE} free
+          Plummers are the only thing a wallet gets a limited amount of.
         </p>
         <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
-          Both the cap and the free allocation are per-wallet, so if you also
-          control another wallet that transacted before <CutoffDate />, you can
-          switch to it and mint its {FREE_ALLOWANCE} free Plummers too.
+          A single transaction mints at most{" "}
+          <span className="font-medium">{MAX_PER_TX}</span>. That&apos;s a gas
+          limit, not an allocation: minting is a loop, and an unbounded batch
+          would cost more gas than a block allows. Want more than {MAX_PER_TX}?
+          Send another transaction.
+        </p>
+        <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">
+          The free allocation is per-wallet, so if you also control another
+          wallet that transacted before <CutoffDate />, you can switch to it
+          and mint its {FREE_ALLOWANCE} free Plummers too.
         </p>
       </section>
 

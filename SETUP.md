@@ -32,8 +32,10 @@ npm run dev
 
 Open http://localhost:3000, connect a wallet, and the check runs automatically. It decides the **price**, not whether you can mint — the mint is open to everyone:
 
-- **✓ OG wallet** — sent at least one mainnet transaction before November 2021, so its first 2 Plummers are free, then 0.002 ETH each up to 10 total
-- **0.002 ETH each** — it didn't, so every one of its 10 costs 0.002 ETH
+- **✓ OG wallet** — sent at least one mainnet transaction before November 2021, so its first 2 Plummers are free, then 0.003 ETH each
+- **0.003 ETH each** — it didn't, so every Plummer it mints costs 0.003 ETH
+
+There is no per-wallet cap: a wallet can mint as many as it likes, up to 20 per transaction.
 
 The numbers above live in `lib/economics.ts`, mirrored from the contract's constants. Change them there, not inline in components.
 

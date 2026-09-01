@@ -7,17 +7,18 @@
 /** Size of the whole collection (contract: MAX_SUPPLY). */
 export const MAX_SUPPLY = 2000;
 
-/** Tokens any one wallet may ever mint (contract: WALLET_LIMIT). */
-export const WALLET_LIMIT = 10;
+/**
+ * Most tokens one transaction may mint (contract: MAX_PER_TX). There is NO
+ * per-wallet cap — this is a gas guard, since minting is a loop. A wallet
+ * wanting more just sends another transaction.
+ */
+export const MAX_PER_TX = 20;
 
 /**
- * Tokens an OG wallet mints for free (contract: FREE_ALLOWANCE). Carved out
- * of WALLET_LIMIT, not added to it: an OG gets 2 free + 8 paid, not 12.
+ * Tokens an OG wallet mints for free (contract: FREE_ALLOWANCE). This is the
+ * only per-wallet limit in the contract.
  */
 export const FREE_ALLOWANCE = 2;
 
 /** Price per *paid* token, in ETH (contract: MINT_PRICE). */
-export const MINT_PRICE_ETH = "0.002";
-
-/** How many an OG wallet still pays for after using its free allowance. */
-export const PAID_AFTER_FREE = WALLET_LIMIT - FREE_ALLOWANCE;
+export const MINT_PRICE_ETH = "0.003";
