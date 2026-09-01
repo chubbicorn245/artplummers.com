@@ -21,4 +21,4 @@ export const MAX_PER_TX = 20;
 export const FREE_ALLOWANCE = 2;
 
 /** Price per *paid* token, in ETH (contract: MINT_PRICE). */
-export const MINT_PRICE_ETH = "0.003";
+export const MINT_PRICE_ETH = "0.002";

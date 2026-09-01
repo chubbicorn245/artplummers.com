@@ -6,7 +6,7 @@ import { createHarness } from "@/test/harness";
 import { MintButton } from "@/components/mint-button";
 
 const FREE = BigInt(0);
-const ONE_TOKEN = BigInt(3000000000000000); // 0.003 ETH
+const ONE_TOKEN = BigInt(2000000000000000); // 0.002 ETH
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -38,7 +38,7 @@ describe("MintButton", () => {
     await h.renderConnected(<MintButton />);
 
     expect(
-      await screen.findByRole("button", { name: /Mint 1 — 0\.003 ETH/ })
+      await screen.findByRole("button", { name: /Mint 1 — 0\.002 ETH/ })
     ).toBeTruthy();
   });
 
@@ -54,7 +54,7 @@ describe("MintButton", () => {
   it("mints at full price when the voucher endpoint declines", async () => {
     const h = createHarness({ price: ONE_TOKEN, og: false });
     await h.renderConnected(<MintButton />);
-    await screen.findByRole("button", { name: /Mint 1 — 0\.003 ETH/ });
+    await screen.findByRole("button", { name: /Mint 1 — 0\.002 ETH/ });
 
     // A 403 is the normal answer for a non-OG, not an error: it must not
     // block minting.
@@ -71,7 +71,7 @@ describe("MintButton", () => {
     setQuantity("3");
 
     expect(
-      await screen.findByRole("button", { name: /Mint 3 — 0\.009 ETH/ })
+      await screen.findByRole("button", { name: /Mint 3 — 0\.006 ETH/ })
     ).toBeTruthy();
   });
 
@@ -199,7 +199,7 @@ describe("MintButton", () => {
     await userEvent.click(mintMore);
 
     expect(
-      await screen.findByRole("button", { name: /Mint 1 — 0\.003 ETH/ })
+      await screen.findByRole("button", { name: /Mint 1 — 0\.002 ETH/ })
     ).toBeTruthy();
   });
 });
