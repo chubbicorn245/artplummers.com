@@ -10,6 +10,7 @@ import { artPlumberAddress, mintChain } from "@/lib/contract";
 import {
   clientKey,
   eligibilityCache,
+  eligibilityCacheKey,
   rateLimiter,
   voucherCache,
   voucherCacheKey,
@@ -86,11 +87,12 @@ export async function GET(
 
   let eligible: boolean;
   try {
+    const eligibilityKey = eligibilityCacheKey(address);
     eligible =
-      eligibilityCache.has(address)
-        ? (eligibilityCache.get(address) as boolean)
+      eligibilityCache.has(eligibilityKey)
+        ? (eligibilityCache.get(eligibilityKey) as boolean)
         : await isOgWallet(address, mainnetNonceReader(rpcUrl));
-    eligibilityCache.set(address, eligible);
+    eligibilityCache.set(eligibilityKey, eligible);
   } catch (e) {
     // A wrong-chain RPC is a deployment mistake, not a transient fault, and
     // it would otherwise pass silently as "nobody is eligible".

@@ -21,6 +21,17 @@ export const eligibilityCache = createBoundedCache<boolean>({
   maxEntries: 5000,
 });
 
+/**
+ * Eligibility is a fact about a 20-byte account, not about how the address
+ * was spelled: the checksummed and all-lowercase forms of one wallet are the
+ * same account. Lowercasing the key folds them together so a wallet asked for
+ * in two casings is looked up once, not billed a second archive read — the
+ * same reason voucherCacheKey normalizes its wallet field.
+ */
+export function eligibilityCacheKey(wallet: string): string {
+  return wallet.toLowerCase();
+}
+
 /** Signed vouchers. See voucherCacheKey for why the key is not just the wallet. */
 export const voucherCache = createBoundedCache<string>({ maxEntries: 5000 });
 
