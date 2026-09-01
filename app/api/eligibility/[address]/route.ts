@@ -6,7 +6,12 @@ import {
   mainnetNonceReader,
   WrongChainError,
 } from "@/lib/eligibility";
-import { clientKey, eligibilityCache, rateLimiter } from "@/lib/api-guards";
+import {
+  clientKey,
+  eligibilityCache,
+  eligibilityCacheKey,
+  rateLimiter,
+} from "@/lib/api-guards";
 
 /**
  * Reports whether a wallet qualifies for the free mint. This is NOT a gate:
@@ -44,10 +49,11 @@ export async function GET(
   try {
     // Historical nonce lookup — requires an archive-capable RPC. Cached
     // because the answer is a fact about frozen history.
-    const eligible = eligibilityCache.has(address)
-      ? (eligibilityCache.get(address) as boolean)
+    const cacheKey = eligibilityCacheKey(address);
+    const eligible = eligibilityCache.has(cacheKey)
+      ? (eligibilityCache.get(cacheKey) as boolean)
       : await isOgWallet(address, mainnetNonceReader(rpcUrl));
-    eligibilityCache.set(address, eligible);
+    eligibilityCache.set(cacheKey, eligible);
 
     return NextResponse.json({
       address,
