@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { createPublicClient, http, isAddress } from "viem";
-import { mainnet } from "viem/chains";
+import { isAddress } from "viem";
+import {
+  CUTOFF_BLOCK,
+  isOgWallet,
+  mainnetNonceReader,
+} from "@/lib/eligibility";
 
-// Last Ethereum mainnet block before 2021-11-01 00:00 UTC (mined 23:59:20 UTC).
-// A wallet is eligible iff it had sent at least one mainnet transaction by then,
-// i.e. its nonce at this block is nonzero.
-const CUTOFF_BLOCK = BigInt(13527858);
-
+/**
+ * Reports whether a wallet qualifies for the free mint. This is NOT a gate:
+ * `eligible: false` wallets can still mint, at full price.
+ */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ address: string }> }
@@ -25,18 +28,13 @@ export async function GET(
     );
   }
 
-  const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
-
   try {
     // Historical nonce lookup — requires an archive-capable RPC
-    const nonce = await client.getTransactionCount({
-      address,
-      blockNumber: CUTOFF_BLOCK,
-    });
+    const eligible = await isOgWallet(address, mainnetNonceReader(rpcUrl));
 
     return NextResponse.json({
       address,
-      eligible: nonce > 0,
+      eligible,
       cutoffBlock: CUTOFF_BLOCK.toString(),
     });
   } catch {
