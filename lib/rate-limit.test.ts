@@ -3,7 +3,7 @@ import { createRateLimiter } from "@/lib/rate-limit";
 
 describe("createRateLimiter", () => {
   it("allows requests up to the limit", () => {
-    let now = 0;
+    const now = 0;
     const rl = createRateLimiter({ limit: 3, windowMs: 1000, now: () => now });
     expect(rl.check("a").allowed).toBe(true);
     expect(rl.check("a").allowed).toBe(true);
@@ -11,7 +11,7 @@ describe("createRateLimiter", () => {
   });
 
   it("refuses the request past the limit", () => {
-    let now = 0;
+    const now = 0;
     const rl = createRateLimiter({ limit: 2, windowMs: 1000, now: () => now });
     rl.check("a");
     rl.check("a");
@@ -35,7 +35,7 @@ describe("createRateLimiter", () => {
   });
 
   it("tracks callers independently", () => {
-    let now = 0;
+    const now = 0;
     const rl = createRateLimiter({ limit: 1, windowMs: 1000, now: () => now });
     rl.check("a");
     expect(rl.check("b").allowed).toBe(true);
