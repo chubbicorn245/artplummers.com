@@ -38,6 +38,21 @@ export async function GET(
     );
   }
 
+  // Check the shape before doing any work. Without this a malformed key —
+  // a placeholder pasted verbatim, a missing 0x, a truncated copy — throws
+  // inside signTypedData and surfaces as an opaque 500 with an empty body,
+  // which is a miserable thing to debug.
+  if (!/^0x[0-9a-fA-F]{64}$/.test(signerKey)) {
+    return NextResponse.json(
+      {
+        error:
+          "Server misconfigured: ELIGIBILITY_SIGNER_PRIVATE_KEY is not a " +
+          "32-byte hex private key (expected 0x followed by 64 hex characters)",
+      },
+      { status: 500 }
+    );
+  }
+
   let eligible: boolean;
   try {
     eligible = await isOgWallet(address, mainnetNonceReader(rpcUrl));
@@ -55,12 +70,18 @@ export async function GET(
     );
   }
 
-  const signature = await signVoucher(
-    signerKey as Hex,
-    mintChain.id,
-    artPlumberAddress,
-    address
-  );
-
-  return NextResponse.json({ address, signature });
+  try {
+    const signature = await signVoucher(
+      signerKey as Hex,
+      mintChain.id,
+      artPlumberAddress,
+      address
+    );
+    return NextResponse.json({ address, signature });
+  } catch {
+    return NextResponse.json(
+      { error: "Voucher signing failed" },
+      { status: 500 }
+    );
+  }
 }
