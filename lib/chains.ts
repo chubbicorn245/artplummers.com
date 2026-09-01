@@ -23,3 +23,28 @@ export const robinhoodTestnet = defineChain({
   },
   testnet: true,
 });
+
+/**
+ * Robinhood Chain mainnet. Same Arbitrum Orbit lineage as the testnet, so
+ * the same prevrandao caveat applies: a token's mint seed reduces to
+ * keccak256(minter, tokenId) and is precomputable. The contract's README
+ * treats that as part of the hunt rather than a bug — worth re-reading
+ * before real money rides on the odds.
+ *
+ * The explorer is Blockscout behind Cloudflare, which challenges automated
+ * requests; that affects tooling like `forge verify-contract`, not links.
+ */
+export const robinhoodMainnet = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://rpc.mainnet.chain.robinhood.com"] },
+  },
+  blockExplorers: {
+    default: {
+      name: "Blockscout",
+      url: "https://robinhoodchain.blockscout.com",
+    },
+  },
+});
