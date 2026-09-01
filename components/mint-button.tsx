@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatEther, type Hex } from "viem";
+import { formatEther, parseEventLogs, zeroAddress, type Hex } from "viem";
 import {
   useAccount,
   useChainId,
@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { artPlumberAbi } from "@/lib/abi/art-plumber";
 import { artPlumberAddress, mintChain } from "@/lib/contract";
 import { MAX_PER_TX } from "@/lib/economics";
+import { MintedReveal } from "@/components/minted-reveal";
 
 /** No voucher: the full-price path. The contract treats this as "no discount". */
 const NO_VOUCHER = "0x" as Hex;
@@ -38,7 +39,13 @@ export function MintButton() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
-  const [quantity, setQuantity] = useState(1);
+  // Held as a string so the field can be genuinely empty mid-edit. Deriving
+  // it from a number forced an empty field back to "1", which meant typing a
+  // replacement appended to it: clear, type 3, get 13.
+  const [quantityInput, setQuantityInput] = useState("1");
+  const quantity = Number.parseInt(quantityInput, 10);
+  const quantityValid =
+    Number.isInteger(quantity) && quantity >= 1 && quantity <= MAX_PER_TX;
 
   const { data: voucher } = useQuery({
     queryKey: ["voucher", address],
@@ -58,16 +65,33 @@ export function MintButton() {
     abi: artPlumberAbi,
     address: artPlumberAddress,
     functionName: "priceFor",
-    args: address ? [address, BigInt(quantity), voucher ?? NO_VOUCHER] : undefined,
+    args:
+      address && quantityValid
+        ? [address, BigInt(quantity), voucher ?? NO_VOUCHER]
+        : undefined,
     chainId: mintChain.id,
-    query: { enabled: Boolean(address && artPlumberAddress && voucher !== undefined) },
+    query: {
+      enabled: Boolean(
+        address && artPlumberAddress && voucher !== undefined && quantityValid
+      ),
+    },
   });
 
   const { writeContract, data: txHash, isPending, error, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: txHash,
-    chainId: mintChain.id,
-  });
+  const {
+    data: receipt,
+    isLoading: isConfirming,
+    isSuccess,
+  } = useWaitForTransactionReceipt({ hash: txHash, chainId: mintChain.id });
+
+  // The ids are not in the transaction's return value — a receipt carries no
+  // return data — but every mint emits Transfer from the zero address, and
+  // those logs name them exactly.
+  const mintedIds = receipt
+    ? parseEventLogs({ abi: artPlumberAbi, eventName: "Transfer", logs: receipt.logs })
+        .filter((log) => log.args.from === zeroAddress)
+        .map((log) => log.args.id)
+    : [];
 
   // Bound to a local so the narrowing below survives into the onClick
   // closure — an imported binding loses it.
@@ -98,8 +122,10 @@ export function MintButton() {
     return (
       <div className="flex flex-col items-center gap-2 rounded-xl border border-green-400/40 bg-green-500/15 px-6 py-4 text-center backdrop-blur-sm">
         <p className="font-semibold text-green-300">
-          Minted {quantity} Art Plummer{quantity > 1 ? "s" : ""}
+          Minted {mintedIds.length || quantity} Art Plummer
+          {(mintedIds.length || quantity) > 1 ? "s" : ""}
         </p>
+        <MintedReveal tokenIds={mintedIds} />
         <a
           href={`${mintChain.blockExplorers.default.url}/tx/${txHash}`}
           target="_blank"
@@ -141,13 +167,20 @@ export function MintButton() {
           type="number"
           min={1}
           max={MAX_PER_TX}
-          value={quantity}
+          value={quantityInput}
           disabled={busy}
           onChange={(e) => {
-            const n = Number(e.target.value);
-            if (Number.isInteger(n)) {
-              setQuantity(Math.min(MAX_PER_TX, Math.max(1, n)));
+            const digits = e.target.value.replace(/[^0-9]/g, "");
+            if (digits === "") {
+              setQuantityInput("");
+              return;
             }
+            setQuantityInput(
+              String(Math.min(MAX_PER_TX, Math.max(1, Number(digits))))
+            );
+          }}
+          onBlur={() => {
+            if (!quantityValid) setQuantityInput("1");
           }}
           className="w-20 rounded-lg border border-black/15 bg-transparent px-3 py-1.5 text-center dark:border-white/20"
         />
@@ -164,14 +197,16 @@ export function MintButton() {
             chainId: mintChain.id,
           })
         }
-        disabled={busy || isPricing || price === undefined}
+        disabled={busy || isPricing || price === undefined || !quantityValid}
         className="rounded-full bg-foreground px-8 py-3 font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-50"
       >
         {isPending
           ? "Confirm in wallet…"
           : isConfirming
             ? "Minting…"
-            : `Mint ${quantity} — ${priceLabel}`}
+            : quantityValid
+              ? `Mint ${quantity} — ${priceLabel}`
+              : "Mint"}
       </button>
 
       <p className="text-xs text-[color:var(--foreground)]/50">
