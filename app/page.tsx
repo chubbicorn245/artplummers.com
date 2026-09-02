@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ConnectWallet } from "@/components/connect-wallet";
+import { ContractAddress } from "@/components/contract-address";
 import { CutoffDate } from "@/components/cutoff-date";
 import { MintButton } from "@/components/mint-button";
 import { MintTerms } from "@/components/mint-terms";
@@ -55,20 +56,23 @@ export default function Home() {
         <ConnectWallet />
         <MintTerms />
         <MintButton />
-        <div className="flex gap-4">
-          {[
-            { href: "/whitepaper", label: "whitepaper" },
-            { href: "/disclaimer", label: "disclaimer" },
-            { href: "/privacy", label: "privacy" },
-          ].map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-sm underline underline-offset-4 opacity-60 transition-opacity hover:opacity-100"
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="flex w-full flex-col items-center gap-2">
+          <div className="flex gap-4">
+            {[
+              { href: "/whitepaper", label: "whitepaper" },
+              { href: "/disclaimer", label: "disclaimer" },
+              { href: "/privacy", label: "privacy" },
+            ].map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-sm underline underline-offset-4 opacity-60 transition-opacity hover:opacity-100"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <ContractAddress />
         </div>
         <p className="max-w-md text-center text-xs text-[color:var(--foreground)]/50">
           Disclaimer: Art Plummers have no intrinsic value and carry no
